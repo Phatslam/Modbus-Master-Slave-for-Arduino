@@ -2,7 +2,7 @@ README.txt
 
 *****Phatslam notes*****
 This is a crude edit of Smarmengol's excellent library that will compile for the ESP8266.  I have renamed this version to
-"espModbusRtu.h", modify your code accordingly.  I only removed the AVR interrupts for serial 0, because I beleive the hardware only has one serial.  Seems to work for me anyhow.
+"espModbusRtu.h", modify your code accordingly.  I only removed the AVR interrupts for serial 0, because I believe the hardware only has one serial.  Seems to work for me anyhow.
 AFAIK, esp8266 has no transmission complete interrupt. Closest it has is TX FIFO empty. So, easiest to settle for serial.flush() plus a delay.  Delay method pilfered from Juan Bester's library.
 
 Original text below
