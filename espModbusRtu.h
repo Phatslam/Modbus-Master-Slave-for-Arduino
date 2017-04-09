@@ -186,6 +186,7 @@ private:
     int8_t process_FC15( uint16_t *regs, uint8_t u8size );
     int8_t process_FC16( uint16_t *regs, uint8_t u8size );
     void buildException( uint8_t u8exception ); // build exception message
+	long baud;
 
 public:
     Modbus();
@@ -291,7 +292,7 @@ Modbus::Modbus(uint8_t u8id)
  */
 void Modbus::begin(long u32speed)
 {
-
+	baud = u32speed;
     switch( u8serno )
     {
 #if defined(UBRR1H)
@@ -400,7 +401,8 @@ void Modbus::begin(long u32speed,uint8_t u8config)
         break;
     }
 
-    port->begin(u32speed, u8config);
+    //port->begin(u32speed, u8config);
+	port->begin(u32speed, static_cast<SerialConfig>(u8config));
     if (u8txenpin > 1)   // pin 0 & pin 1 are reserved for RX/TX
     {
         // return RS485 transceiver to transmit mode
@@ -888,6 +890,19 @@ int8_t Modbus::getRxBuffer()
  */
 void Modbus::sendTxBuffer()
 {
+	unsigned int T1_5 = 16500000/baud; // 1T * 1.5 = T1.5
+	if (baud > 19200){
+		T1_5 = 750;
+		}
+	
+	unsigned int frameDelay = T1_5 * 2;
+	/* The modbus definition of a frame delay is a waiting period of 3.5 character times
+		 between packets. This is not quite the same as the frameDelay implemented in
+		 this library but does benifit from it.
+		 The frameDelay variable is mainly used to ensure that the last character is
+		 transmitted without truncation. A value of 2 character times is chosen which
+		 should suffice without holding the bus line high for too long.*/
+	
     uint8_t i = 0;
 
     // append CRC to message
@@ -921,7 +936,7 @@ void Modbus::sendTxBuffer()
 #endif
         case 0:
         default:
-            UCSR0A=UCSR0A |(1 << TXC0);
+            //UCSR0A=UCSR0A |(1 << TXC0);
             break;
         }
         digitalWrite( u8txenpin, HIGH );
@@ -957,7 +972,8 @@ void Modbus::sendTxBuffer()
 #endif
         case 0:
         default:
-            while (!(UCSR0A & (1 << TXC0)));
+			port->flush();
+			delayMicroseconds(frameDelay);
             break;
         }
 
